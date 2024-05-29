@@ -1,72 +1,69 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { z } from 'zod'
-import { createTRPCRouter, publicProcedure, protectedProcedure } from './../trpc';
-import { todoInput, toggleeInput } from '~/server/schema/zodSchema';
+import { z } from "zod";
 
+import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { todoInput } from "../../../types";
 
 export const todoRouter = createTRPCRouter({
-    all: protectedProcedure.query(async ({ ctx }) => {
-
-        const todos = await ctx.db.todo.findMany({
-            where: {
-                userId: ctx.session.user.id,
-            },
-        });
-
-        return todos.map(({ id, text, done }) =>
-            ({ id, text, done })
-        );
-        return [
-            {
-                id: 'fake',
-                text: "fake text",
-                done: false,
-            },
-            {
-                id: 'fake1',
-                text: "fake1 text",
-                done: true,
-            }
-        ]
+  all: protectedProcedure.query(async ({ ctx }) => {
+    const todos = await ctx.db.todo.findMany({
+      where: {
+        userId: ctx.session.user.id,
+      },
+    });
+    const dummyData = [
+        {
+          id: 'fake',
+          text: 'fake text',
+          done: false,
+        },
+        {
+          id: 'fake1',
+          text: 'fake1 text',
+          done: true,
+        },
+      ];
+  
+      // Concatenate dummy data with actual todos
+      const allTodos = [...todos.map(({ id, text, done }) => ({ id, text, done })), ...dummyData];
+  
+      return allTodos;
+  }),
+  create: protectedProcedure.input(todoInput).mutation(({ ctx, input }) => {
+    // throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    return ctx.db.todo.create({
+      data: {
+        text: input,
+        user: {
+          connect: {
+            id: ctx.session.user.id,
+          },
+        },
+      },
+    });
+  }),
+  delete: protectedProcedure.input(z.string()).mutation(({ ctx, input }) => {
+    return ctx.db.todo.delete({
+      where: {
+        id: input,
+      },
+    });
+  }),
+  toggle: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        done: z.boolean(),
+      })
+    )
+    .mutation(({ ctx, input }) => {
+      const { id, done } = input;
+      return ctx.db.todo.update({
+        where: {
+          id,
+        },
+        data: {
+          done,
+        },
+      });
     }),
-
-    create: protectedProcedure.input(todoInput).mutation(async ({ ctx, input }) => {
-        const newTodo = await ctx.db.todo.create({
-            data: {
-                text: input,
-                done: false, // Default value for a new to-do
-                user: {
-                    connect: {
-                        id: ctx.session.user.id, // Assuming session contains user data
-                    },
-                },
-            },
-        });
-
-        return newTodo;
-    }),
-    delete: protectedProcedure.input(z.string()).mutation(async ({ ctx, input }) => {
-        const deletedTodo = await ctx.db.todo.delete({
-            where: {
-                id: input,
-            },
-        });
-
-        return deletedTodo;
-    }),
-    toggle: protectedProcedure.input(toggleeInput).mutation(async ({ ctx, input }) => {
-        const toggleTodo = await ctx.db.todo.update({
-            where: {
-                id: input.id,
-                userId: ctx.session.user.id, // Ensure the user owns the to-do item
-            },
-            data: {
-                done: input.done,
-            },
-        });
-
-        return toggleTodo;
-    }),
-
-})
-
+});

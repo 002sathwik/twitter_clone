@@ -1,6 +1,8 @@
 import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
 
+import Todos from "~/components/page";
+
 export default function Home() {
   const { data: sessionData } = useSession();
 
@@ -14,22 +16,32 @@ export default function Home() {
       <main className=" flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c]">
         <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
           <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-[5rem]">
-            Create <span className="text-[hsl(280,100%,70%)]">T3</span> App
+            T3 <span className="text-[hsl(280,100%,70%)]">STACK</span> TODO
           </h1>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-8"></div>
-          <div className="flex flex-col items-center gap-2">
-            <p className="text-2xl text-white">
+          <div className=" grid grid-cols-1  gap-4 border border-black sm:grid-cols-2 md:gap-8">
+            <div className="flex flex-col items-center gap-2">
               {sessionData && (
-                <span>Logged in as {sessionData.user?.email}</span>
+                <div className="grid-col-1 grid gap-4 md:gap-8">
+                  <div className="flex flex-col gap-4 rounded-xl bg-white/10 p-4 text-white">
+                    <h3 className="text-xl  font-extrabold">Todos</h3>
+                     <Todos/>
+
+                  </div>
+                </div>
               )}
-            </p>
-            <button
-              onClick={sessionData ? () => void signOut() : () => void signIn()}
-              className="bg-blue-700 text-white hover:bg-blue-800 focus:ring-4"
-            >
-              {sessionData ? "SignOut" : "SignIn"}
-            </button>
+            </div>
           </div>
+        </div>
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-2xl text-white">
+            {sessionData && <span>Logged in as {sessionData.user?.email}</span>}
+          </p>
+          <button
+            onClick={sessionData ? () => void signOut() : () => void signIn()}
+            className="rounded-xl  bg-blue-700 px-4 py-4 text-white hover:bg-blue-800 focus:ring-4"
+          >
+            {sessionData ? "SignOut" : "SignIn"}
+          </button>
         </div>
       </main>
     </>
